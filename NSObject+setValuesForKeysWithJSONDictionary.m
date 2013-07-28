@@ -38,8 +38,11 @@
         // If not, see if the backing ivar name is being supplied in the JSON dictionary.
         if (value == nil) {
             const char *ivarPropertyName = property_copyAttributeValue(property, "V");
-            NSString *ivarName = [NSString stringWithUTF8String:ivarPropertyName];
-            value = [keyedValues objectForKey: ivarName];
+            //If the iVarProperty is NULL we skip it
+            if(ivarPropertyName!=NULL) {
+                NSString *ivarName = [NSString stringWithUTF8String:ivarPropertyName];
+                value = [keyedValues objectForKey: ivarName];
+            }
             free((void *)ivarPropertyName);
         }
         
@@ -70,7 +73,11 @@
                         value = [numberFormatter numberFromString:value];
                     } else if ([class isSubclassOfClass:[NSDate class]] && [value isKindOfClass:[NSString class]] && (dateFormatter != nil)) {
                         value = [dateFormatter dateFromString:value];
+                    //We don't handle nested object yet, if the value is a dictionary we skip the value
+                    } else if ([class isSubclassOfClass:[NSString class]] && [value isKindOfClass:[NSDictionary class]]) {
+                        value = @"";
                     }
+                    
                     
                     break;
                 }
@@ -110,6 +117,12 @@
                     break;
                 }
             }
+            
+            //Convert NSNULL to nil
+            if ([value isKindOfClass:[NSNull class]]) {
+                value = nil;
+            }
+            
             [self setValue:value forKey:keyName];
             free(typeEncoding);
         }
